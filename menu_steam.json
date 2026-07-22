@@ -1,0 +1,71 @@
+{
+  "content": "",
+  "embeds": [
+    {
+      "color": 6776679,
+      "image": {
+        "url": "https://media.discordapp.net/attachments/1527006158282555412/1527007500577280191/image.png?ex=6a5f06ce&is=6a5db54e&hm=31a013a21637d35c0e1f3712e8cb02ad843a8b091fc7148e59f9177575324a59&=&format=webp&quality=lossless&width=1766&height=686"
+      }
+    },
+    {
+      "description": "> Времена когда важно пополнение аккаунта не на прямую, а через магазин - мы предоставляем вас одну из самых низкий цен! Пополнение доступно для России из-за сложностей с прямым пополнением. **Цена указана за одну единицу!**",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": [
+        {
+          "name": "> **RUB**",
+          "value": "```1.1₽ ```",
+          "inline": true
+        },
+        {
+          "name": "> **KZT**",
+          "value": "```0.298₽ ```",
+          "inline": true
+        },
+        {
+          "name": "> **UAH**",
+          "value": "```2.5₽ ```",
+          "inline": true
+        }
+      ],
+      "title": "Пополнение аккаунта Steam",
+      "footer": {
+        "text": "Пополнение начинается от суммы 100₽ "
+      }
+    },
+    {
+      "description": "> А почему не оботи проблему с пополнением и покупкой - и не купить на прямую? Поменяй регион аккаунта на нужный. Доступно для любого аккаунта.",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": [
+        {
+          "name": "> **RUB / KZT / UAH**",
+          "value": "```250₽ ```",
+          "inline": true
+        },
+        {
+          "name": "> **Новые аккаунты без пополнений ранее**",
+          "value": "```200₽ ```",
+          "inline": true
+        }
+      ],
+      "title": "Смена региона аккаунта Steam"
+    },
+    {
+      "description": "> Напишите нам в тикет - мы подберем вам ключ, игру по низкой цене, любая операция! По абсолютно любой валюте!",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": [],
+      "title": "Ключи и игры"
+    }
+  ],
+  "attachments": [],
+  "flags": 0,
+  "components": []
+}

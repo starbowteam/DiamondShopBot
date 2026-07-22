@@ -1,0 +1,83 @@
+{
+  "content": "",
+  "embeds": [
+    {
+      "color": 6776679,
+      "image": {
+        "url": "https://media.discordapp.net/attachments/1527006158282555412/1527007501176803441/image.png?ex=6a5f06ce&is=6a5db54e&hm=e04fcddc9fe99b715cee1e8f3f5e936009bbf26f1d155f200b085893fe7e98be&=&format=webp&quality=lossless&width=1766&height=686"
+      }
+    },
+    {
+      "title": "Робуксы",
+      "description": "> Валюта в всей любимой игре. Отличная валюта для покупок геймпассов, дополнений игр либо одежды на персонажа.",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": [
+        {
+          "name": "> **1 Robux**",
+          "value": "```0.73₽ | 4.68₸```",
+          "inline": true
+        },
+        {
+          "name": "> **Подарочные карты**",
+          "value": "```Узнавать цену в тикете```",
+          "inline": true
+        }
+      ]
+    },
+    {
+      "title": "Смена региона",
+      "description": "> РКН испортил ваш день блокировкой чата? Ничего страшного! Купите смену региона у нас - и играйте спокойно!",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": [
+        {
+          "name": "> **Подходящая страна**",
+          "value": "```180₽  ```",
+          "inline": true
+        }
+      ]
+    },
+    {
+      "title": "Roblox Premium",
+      "description": "> Ежемесячная подписка от Roblox, дающая преймущество в играх, тег, и начисление робуксов в течении месяца.",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": [
+        {
+          "name": "> **Premium - 450R**",
+          "value": "```480₽ | 3150₸```",
+          "inline": true
+        },
+        {
+          "name": "> **Premium - 1000R**",
+          "value": "```890₽ | 5840₸```",
+          "inline": true
+        },
+        {
+          "name": "> **Premium - 2200R**",
+          "value": "```1700₽ | 11140₸```",
+          "inline": true
+        }
+      ]
+    },
+    {
+      "title": "Обход блокировки",
+      "description": "> Мы бесплатно предоставляем обход блокировок, напишите в тикет - и получите туториал. Можно попробывать - <#1476243804985098310>",
+      "color": 6776679,
+      "image": {
+        "url": "https://cdn.discordapp.com/attachments/1223595469746475049/1459289685405728951/image_2026-01-10_00-22-10.png?ex=696ca02d&is=696b4ead&hm=d291a46be81cec5007d79f32d062a6b22a7b0f8a1ddda749c2a9da093da1d965&"
+      },
+      "fields": []
+    }
+  ],
+  "attachments": [],
+  "flags": 0,
+  "components": []
+}
