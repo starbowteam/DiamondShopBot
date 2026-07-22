@@ -19,26 +19,26 @@ from disnake import PartialEmoji, ui, ButtonStyle, Embed
 # CONFIG
 # ----------------------------
 CONFIG = {
-    "BOT_TOKEN": os.getenv("BOT_TOKEN"),  # теперь берётся из переменной окружения
-    "ALLOWED_ROLES": [1154757071330365490, 1127428607606796294, 1179045907493306550,1529217572849844294],
+    "BOT_TOKEN": os.getenv("BOT_TOKEN"),  # берём из переменной окружения
+    "ALLOWED_ROLES": [1154757071330365490, 1127428607606796294, 1179045907493306550],
     "ALLOWED_ROLE_TICKET": [1459249476236607498],
     "LOG_CHANNEL_ID": 1462418981825810535,
     "LOG_CHANNEL_ID_PANEL": 1462418981825810535,
     "EMBED_IMAGE_URL": "https://media.discordapp.net/attachments/1527006158282555412/1527007499192893561/image.png?ex=6a60584e&is=6a5f06ce&hm=1b0ba12a8c8d57f41c57bc03a6998178f6cfb6b83db5837d448d1ab495c46830&=&format=webp&quality=lossless&width=1766&height=686",
-    "DATA_DIR": os.path.join(os.path.dirname(os.path.abspath(__file__)), "data"),
+    "DATA_DIR": os.path.dirname(os.path.abspath(__file__)),  # теперь корень
     "PANEL_CHANNEL_ID": 1462136361711829053,
     "TICKET_CATEGORY_ID": 1462419587835363614,
     "PAID_CATEGORY_ID": 1470779295650549885,
     "TARGET_REVIEWER_ID": 796293832751972352,
     "REVIEW_COUNT_CHANNEL": 1462074763437543435,
     "TICKET_COOLDOWN_SECONDS": 5,
-    "INFO_TEMPLATE_PATH": os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "info-o-zakaze.json"),
-    "PK_FILE_PATH": os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "pk.json"),
+    "INFO_TEMPLATE_PATH": os.path.join(os.path.dirname(os.path.abspath(__file__)), "info-o-zakaze.json"),
+    "PK_FILE_PATH": os.path.join(os.path.dirname(os.path.abspath(__file__)), "pk.json"),  # если нужно, но мы вшили реквизиты
     "GUILD_ID": "1127428607606796288",
     "VOICE_CHANNEL_ID": 1464699044751478815,
     "MANAGER_ROLE_ID": 1154757071330365490,
     "PAID_NOTIFY_CHANNEL_ID": 1462418981825810535,
-    # ID ролей покупателей (вставлены твои)
+    # ID ролей покупателей
     "ROLE_IDS": {
         "club": 1284697274655576186,
         "bronze": 1127430321214861395,
@@ -52,7 +52,7 @@ CONFIG = {
     },
 }
 
-# Ensure data dir
+# Убедимся, что корневая папка существует (она и так есть)
 os.makedirs(CONFIG["DATA_DIR"], exist_ok=True)
 
 FILES = {
@@ -61,7 +61,7 @@ FILES = {
     "promo_txt": os.path.join(CONFIG["DATA_DIR"], "promo_codes.txt"),
     "rates": os.path.join(CONFIG["DATA_DIR"], "rates.json"),
     "last_review_id": os.path.join(CONFIG["DATA_DIR"], "last_review_id.json"),
-    "review_counts": os.path.join(CONFIG["DATA_DIR"], "review_counts.json"),  # новый файл
+    "review_counts": os.path.join(CONFIG["DATA_DIR"], "review_counts.json"),
 }
 
 # ----------------------------
@@ -143,13 +143,10 @@ save_json(FILES["used_promo"], used_promo)
 # ROLE SYSTEM FOR REVIEWS
 # ----------------------------
 def get_roles_for_count(count: int) -> list[int]:
-    """Возвращает список ID ролей для данного количества отзывов."""
     roles = []
     role_ids = CONFIG["ROLE_IDS"]
-
     if count >= 1:
-        roles.append(role_ids["club"])   # Клуб даётся всегда при первом отзыве
-
+        roles.append(role_ids["club"])
     if 1 <= count <= 2:
         roles.append(role_ids["bronze"])
     elif 3 <= count <= 4:
@@ -166,43 +163,26 @@ def get_roles_for_count(count: int) -> list[int]:
         roles.append(role_ids["legendary"])
     elif count >= 26:
         roles.append(role_ids["pka"])
-    # если count == 0, не выдаём ничего
-
     return roles
 
 async def update_user_roles(member: disnake.Member, count: int):
-    """Обновляет роли покупателя у участника и логирует в канал."""
     role_ids = CONFIG["ROLE_IDS"]
-    all_buyer_roles = list(role_ids.values())   # все управляемые роли
-
-    # Роли, которые должны быть у пользователя
+    all_buyer_roles = list(role_ids.values())
     target_role_ids = get_roles_for_count(count)
-
-    # Текущие роли пользователя
     current_role_ids = [r.id for r in member.roles]
-
-    # Роли для снятия (есть у пользователя, но не должны быть)
     to_remove = [rid for rid in all_buyer_roles if rid in current_role_ids and rid not in target_role_ids]
-    # Роли для выдачи (должны быть, но отсутствуют)
     to_add = [rid for rid in target_role_ids if rid not in current_role_ids]
-
     guild = member.guild
-
-    # Снимаем
     for rid in to_remove:
         role = guild.get_role(rid)
         if role:
             await member.remove_roles(role)
             logger.info(f"Снята роль {role.name} у {member} (отзывов: {count})")
-
-    # Выдаём
     for rid in to_add:
         role = guild.get_role(rid)
         if role:
             await member.add_roles(role)
             logger.info(f"Выдана роль {role.name} пользователю {member} (отзывов: {count})")
-
-    # Логируем изменения в канал, если что-то изменилось
     if to_remove or to_add:
         target_names = []
         for rid in target_role_ids:
@@ -265,7 +245,6 @@ class BuyTicketModal(Modal):
         if not cat:
             return await inter.response.send_message("❌ Категория не найдена", ephemeral=True)
 
-        # Имя канала = название товара (очищенное)
         safe_item = item.lower().replace(" ", "-")[:80]
         channel_name = f"{safe_item}"
         overwrites = {
@@ -333,7 +312,6 @@ class TicketButtons(View):
         emoji=PartialEmoji(name="image_20260110_001406", id=1459219370495709374),
     )
     async def requisites(self, button, inter: disnake.MessageInteraction):
-        # Встроенные данные с двумя эмбедами
         embeds_data = [
             {
                 "type": "rich",
@@ -379,7 +357,6 @@ class TicketButtons(View):
         row=1
     )
     async def pay(self, button, inter: disnake.MessageInteraction):
-        # Проверка прав
         if not any(r.id in CONFIG["ALLOWED_ROLES"] for r in inter.author.roles):
             return await inter.response.send_message("⛔ Нет прав", ephemeral=True)
 
@@ -387,7 +364,6 @@ class TicketButtons(View):
         if not msg.embeds or len(msg.embeds) < 2:
             return await inter.response.send_message("❌ Второй embed не найден", ephemeral=True)
 
-        # Проверяем, не оплачен ли уже
         desc = msg.embeds[1].description or ""
         if "Статус - Заказ оплачен" in desc:
             return await inter.response.send_message("Заказ уже оплачен.", ephemeral=True)
@@ -425,7 +401,6 @@ class TicketButtons(View):
         else:
             logger.warning("PAID_CATEGORY_ID not found: %s", CONFIG["PAID_CATEGORY_ID"])
 
-        # Уведомление в канал (раскомментировано)
         manager_role = inter.guild.get_role(CONFIG["MANAGER_ROLE_ID"])
         manager_ping = manager_role.mention if manager_role else "@менеджер"
         await inter.channel.send(
@@ -459,7 +434,6 @@ class TicketButtons(View):
 
 
 class TicketButtonsPaid(View):
-    """View для оплаченного тикета — кнопка Оплатить убрана, только закрытие и реквизиты."""
     def __init__(self):
         super().__init__(timeout=None)
 
@@ -480,7 +454,6 @@ class TicketButtonsPaid(View):
         emoji=PartialEmoji(name="image_20260110_001406", id=1459219370495709374),
     )
     async def requisites(self, button, inter: disnake.MessageInteraction):
-        # Встроенные данные с двумя эмбедами (без файла)
         embeds_data = [
             {
                 "type": "rich",
@@ -644,9 +617,7 @@ class TicketPanelView(View):
 # ----------------------------
 # REVIEW COUNTER + BANNER
 # ----------------------------
-
 async def update_review_counter():
-    """Считает сообщения в канале отзывов и обновляет баннер сервера."""
     try:
         text_ch = bot.get_channel(CONFIG["REVIEW_COUNT_CHANNEL"])
         if not text_ch:
@@ -654,27 +625,21 @@ async def update_review_counter():
         if not text_ch:
             logger.warning("update_review_counter: review channel not found")
             return
-
-        # Считаем все сообщения в канале + начальное смещение
         count = 1431
         async for m in text_ch.history(limit=None):
             count += 1
-
         logger.info("Review count: %s", count)
         await update_server_banner(count)
-
     except Exception as e:
         logger.exception("update_review_counter error: %s", e)
         await log_discord("Ошибка обновления счётчика отзывов", str(e), color=0xff0000)
 
-
 async def update_server_banner(review_count: int):
     try:
-        # Абсолютные пути относительно директории скрипта
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        base_path = os.path.join(script_dir, "data", "banner.png")
-        output_path = os.path.join(script_dir, "data", "banner_ready.png")
-        font_path = os.path.join(script_dir, "data", "ProximaNova-ExtraBold.ttf")
+        base_path = os.path.join(script_dir, "banner.png")
+        output_path = os.path.join(script_dir, "banner_ready.png")
+        font_path = os.path.join(script_dir, "ProximaNova-ExtraBold.ttf")
 
         if not os.path.exists(base_path):
             logger.warning("Banner file not found: %s", base_path)
@@ -685,64 +650,43 @@ async def update_server_banner(review_count: int):
 
         img = Image.open(base_path).convert("RGBA")
         draw = ImageDraw.Draw(img)
-
         font = ImageFont.truetype(font_path, 400)
         text = str(review_count)
-
-        # Центрируем текст внутри тёмной рамки баннера
-        # Рамка: x=75..710, y=235..490 → центр (392, 362)
         draw.text((594, 540), text, font=font, fill=(255, 255, 255), anchor="mm")
-
         img.save(output_path)
 
         guild = bot.get_guild(int(CONFIG["GUILD_ID"]))
         if not guild:
             logger.warning("update_server_banner: guild not found")
             return
-
         with open(output_path, "rb") as f:
             await guild.edit(banner=f.read())
-
         logger.info("Banner updated with %s reviews", review_count)
         await log_discord("Баннер обновлён", f"Отзывов: **{review_count}**", color=0x00aaff)
-
     except Exception as e:
         logger.exception("Banner update error: %s", e)
         await log_discord("Ошибка обновления баннера", str(e), color=0xff0000)
-
 
 @tasks.loop(hours=24)
 async def review_counter_task():
     await bot.wait_until_ready()
     await update_review_counter()
 
-
 @bot.event
 async def on_message(message: disnake.Message):
-    """Обновляем баннер и роли при каждом новом отзыве."""
     if message.author.bot:
         return
-
-    # --- Обновление ролей по отзывам ---
     if message.channel.id == CONFIG["REVIEW_COUNT_CHANNEL"]:
-        # 1) Загружаем счётчики
         counts = load_json(FILES["review_counts"], {})
         user_id = str(message.author.id)
         counts[user_id] = counts.get(user_id, 0) + 1
         save_json(FILES["review_counts"], counts)
-
-        # 2) Обновляем роли для автора (если он на сервере)
         if isinstance(message.author, disnake.Member):
             await update_user_roles(message.author, counts[user_id])
-
-        # 3) Обновляем баннер
         bot.loop.create_task(update_review_counter())
-
     await bot.process_commands(message)
 
-
 async def keep_voice_alive():
-    """Держит бота в голосовом канале для присутствия."""
     await bot.wait_until_ready()
     while not bot.is_closed():
         try:
@@ -762,7 +706,6 @@ async def keep_voice_alive():
         except Exception as e:
             logger.exception("keep_voice_alive loop error: %s", e)
         await asyncio.sleep(60)
-
 
 async def ensure_panel():
     await bot.wait_until_ready()
@@ -790,7 +733,6 @@ async def ensure_panel():
             logger.exception("ensure_panel error: %s", e)
         await asyncio.sleep(7200)
 
-
 @bot.event
 async def on_disconnect():
     logger.warning("Bot disconnected from gateway")
@@ -804,7 +746,7 @@ async def on_error(event, *args, **kwargs):
     logger.exception("Unhandled exception in event %s", event)
 
 # ----------------------------
-# ADMIN COMMANDS + helpers
+# ADMIN COMMANDS
 # ----------------------------
 def log_command(func):
     @functools.wraps(func)
@@ -833,7 +775,6 @@ def log_command(func):
                 pass
     return wrapper
 
-
 @bot.slash_command(
     name="set_rate",
     description="Установить курс/коэффициент (админ)",
@@ -847,7 +788,6 @@ async def set_rate(ctx, имя: str, коэффициент: float):
     await ctx.send(f"✅ Установлено: {имя} → {коэффициент}", ephemeral=True)
     await log_discord("Изменён курс/коэффициент", f"{ctx.author.mention} установил {имя} → {коэффициент}", color=0x00ff00)
 
-
 @bot.slash_command(
     name="get_rates",
     description="Показать текущие курсы",
@@ -857,7 +797,6 @@ async def set_rate(ctx, имя: str, коэффициент: float):
 async def get_rates(ctx):
     embed = disnake.Embed(title="Курсы / коэффициенты", description=json.dumps(rates, ensure_ascii=False, indent=2))
     await ctx.send(embed=embed, ephemeral=True)
-
 
 @bot.slash_command(
     name="say",
@@ -906,7 +845,6 @@ async def say(
             logger.exception("say embed error: %s", e)
             await ctx.send("❌ Ошибка при отправке embed.", ephemeral=True)
 
-
 @bot.slash_command(
     name="get_json",
     description="Получить JSON из сообщения по ссылке",
@@ -929,7 +867,6 @@ async def get_json(ctx, message_link: str):
     await ctx.response.send_message(file=disnake.File(fp=buf, filename="message.json"), ephemeral=True)
     await log_discord("get_json", f"{ctx.author.mention} выгрузил JSON из {channel.mention}", color=0x00ff00)
 
-
 @bot.slash_command(name="promo_add", description="Добавить промокод (админ)", default_member_permissions=disnake.Permissions(administrator=True))
 @log_command
 async def promo_add(ctx, code: str, value: str):
@@ -939,7 +876,6 @@ async def promo_add(ctx, code: str, value: str):
     write_promo_txt()
     await ctx.send(f"✅ Промокод `{code}` добавлен → {value}", ephemeral=True)
     await log_discord("Промокод добавлен", f"{ctx.author.mention} добавил `{code}` → {value}", color=0x00ff00)
-
 
 @bot.slash_command(name="promo_remove", description="Удалить промокод (админ)", default_member_permissions=disnake.Permissions(administrator=True))
 @log_command
@@ -954,7 +890,6 @@ async def promo_remove(ctx, code: str):
     else:
         await ctx.send("❌ Нет такого промокода", ephemeral=True)
 
-
 @bot.slash_command(name="promo_list", description="Список промокодов", default_member_permissions=disnake.Permissions(administrator=True))
 @log_command
 async def promo_list(ctx):
@@ -962,7 +897,6 @@ async def promo_list(ctx):
         return await ctx.send("Промокодов нет.", ephemeral=True)
     text = "\n".join([f"{k} → {v}" for k, v in promo_codes.items()])
     await ctx.send(f"```\n{text}\n```", ephemeral=True)
-
 
 @bot.slash_command(
     name="расчет",
@@ -985,7 +919,6 @@ async def расчет(ctx, цена: float, скидка: float):
     except Exception as e:
         await ctx.edit_original_response(content=f"Ошибка: {e}")
 
-
 @bot.slash_command(
     name="обновить_баннер",
     description="Принудительно обновить баннер сервера (счётчик отзывов)",
@@ -996,10 +929,60 @@ async def обновить_баннер(ctx):
     await update_review_counter()
     await ctx.edit_original_response(content="✅ Баннер обновлён!")
 
+@bot.slash_command(
+    name="пересчитать_отзывы",
+    description="Пересчитать все сообщения в канале отзывов и обновить роли (админ)",
+    default_member_permissions=disnake.Permissions(administrator=True)
+)
+async def пересчитать_отзывы(ctx: disnake.ApplicationCommandInteraction):
+    await ctx.response.defer(ephemeral=True)
+    channel_id = CONFIG["REVIEW_COUNT_CHANNEL"]
+    channel = bot.get_channel(channel_id)
+    if not channel:
+        channel = await bot.fetch_channel(channel_id)
+    if not channel or not isinstance(channel, disnake.TextChannel):
+        return await ctx.edit_original_response(content="❌ Канал отзывов не найден.")
+    counts = {}
+    try:
+        async for message in channel.history(limit=None):
+            if message.author.bot:
+                continue
+            uid = str(message.author.id)
+            counts[uid] = counts.get(uid, 0) + 1
+    except Exception as e:
+        logger.exception("Ошибка при чтении истории канала: %s", e)
+        return await ctx.edit_original_response(content=f"❌ Ошибка при чтении истории: {e}")
+    if not counts:
+        return await ctx.edit_original_response(content="ℹ️ В канале отзывов нет сообщений от пользователей.")
+    save_json(FILES["review_counts"], counts)
+    guild = ctx.guild or bot.get_guild(int(CONFIG["GUILD_ID"]))
+    if not guild:
+        return await ctx.edit_original_response(content="❌ Сервер не найден.")
+    updated = 0
+    for uid_str, count in counts.items():
+        uid = int(uid_str)
+        member = guild.get_member(uid)
+        if member:
+            await update_user_roles(member, count)
+            updated += 1
+        else:
+            logger.warning(f"Пользователь {uid} не найден на сервере при пересчёте.")
+    await update_review_counter()
+    await ctx.edit_original_response(
+        content=f"✅ Пересчёт завершён!\n"
+                f"Всего пользователей с отзывами: {len(counts)}\n"
+                f"Обновлено ролей у пользователей на сервере: {updated}"
+    )
+    await log_discord(
+        title="📊 Пересчёт отзывов",
+        description=f"Админ {ctx.author.mention} запустил пересчёт.\n"
+                    f"Всего записей: {len(counts)}, обновлено ролей: {updated}",
+        color=0x00aaff
+    )
+
 # ----------------------------
 # CONSUMER COMMANDS
 # ----------------------------
-
 @bot.slash_command(name="robux", description="Рассчитать цену робуксов")
 async def robux(ctx, кол_во: int):
     await ctx.response.defer()
@@ -1038,417 +1021,31 @@ async def steam(
         logger.exception("steam error: %s", e)
         await ctx.edit_original_response(content=f"Ошибка расчёта: {e}")
 
-# ----------------------------
-# АДМИНСКАЯ КОМАНДА ДЛЯ ПЕРЕСЧЁТА ОТЗЫВОВ
-# ----------------------------
-@bot.slash_command(
-    name="пересчитать_отзывы",
-    description="Пересчитать все сообщения в канале отзывов и обновить роли (админ)",
-    default_member_permissions=disnake.Permissions(administrator=True)
-)
-async def пересчитать_отзывы(ctx: disnake.ApplicationCommandInteraction):
-    await ctx.response.defer(ephemeral=True)
-
-    channel_id = CONFIG["REVIEW_COUNT_CHANNEL"]
-    channel = bot.get_channel(channel_id)
-    if not channel:
-        channel = await bot.fetch_channel(channel_id)
-    if not channel or not isinstance(channel, disnake.TextChannel):
-        return await ctx.edit_original_response(content="❌ Канал отзывов не найден.")
-
-    # Считаем сообщения по авторам
-    counts = {}
-    try:
-        async for message in channel.history(limit=None):
-            if message.author.bot:
-                continue
-            uid = str(message.author.id)
-            counts[uid] = counts.get(uid, 0) + 1
-    except Exception as e:
-        logger.exception("Ошибка при чтении истории канала: %s", e)
-        return await ctx.edit_original_response(content=f"❌ Ошибка при чтении истории: {e}")
-
-    if not counts:
-        return await ctx.edit_original_response(content="ℹ️ В канале отзывов нет сообщений от пользователей.")
-
-    # Сохраняем в файл
-    save_json(FILES["review_counts"], counts)
-
-    # Обновляем роли для каждого пользователя, кто есть на сервере
-    guild = ctx.guild or bot.get_guild(int(CONFIG["GUILD_ID"]))
-    if not guild:
-        return await ctx.edit_original_response(content="❌ Сервер не найден.")
-
-    updated = 0
-    for uid_str, count in counts.items():
-        uid = int(uid_str)
-        member = guild.get_member(uid)
-        if member:
-            await update_user_roles(member, count)
-            updated += 1
-        else:
-            logger.warning(f"Пользователь {uid} не найден на сервере при пересчёте.")
-
-    # Обновляем баннер
-    await update_review_counter()
-
-    await ctx.edit_original_response(
-        content=f"✅ Пересчёт завершён!\n"
-                f"Всего пользователей с отзывами: {len(counts)}\n"
-                f"Обновлено ролей у пользователей на сервере: {updated}"
-    )
-    await log_discord(
-        title="📊 Пересчёт отзывов",
-        description=f"Админ {ctx.author.mention} запустил пересчёт.\n"
-                    f"Всего записей: {len(counts)}, обновлено ролей: {updated}",
-        color=0x00aaff
-    )
-    
-# ----------------------------
-# РАССЫЛКА (embed + прогресс + стоп)
-# ----------------------------
-class MassSender:
-    """Управление активной рассылкой."""
-    active = None  # текущая задача рассылки
-    stop_flag = False  # флаг остановки
-
-@bot.slash_command(
-    name="рассылка",
-    description="Отправить embed-сообщение всем участникам сервера в ЛС (админ)",
-    default_member_permissions=disnake.Permissions(administrator=True)
-)
-async def рассылка(
-    ctx,
-    embed_json: Optional[str] = commands.Param(
-        name="embed_json",
-        description="JSON с эмбедом (как в /say)",
-        default=None
-    ),
-    файл_embed: Optional[disnake.Attachment] = commands.Param(
-        name="файл_embed",
-        description="JSON-файл с эмбедом",
-        default=None
-    ),
-    только_с_ролью: Optional[disnake.Role] = commands.Param(
-        name="только_с_ролью",
-        description="Отправить только участникам с этой ролью (опционально)",
-        default=None
-    )
-):
-    """Отправляет embed всем участникам (кроме ботов) с прогрессом и кнопкой остановки."""
-    await ctx.response.defer(ephemeral=True)
-
-    # Проверяем, что передан embed (либо JSON, либо файл)
-    if not embed_json and not файл_embed:
-        return await ctx.edit_original_response(
-            content="❌ Укажите JSON с embed (через `embed_json` или загрузите файл)."
-        )
-
-    # Парсим embed
-    try:
-        if файл_embed:
-            raw = await файл_embed.read()
-            data = json.loads(raw.decode("utf-8"))
-        else:
-            data = json.loads(embed_json)
-
-        if "embeds" not in data:
-            return await ctx.edit_original_response(content="❌ В JSON нет поля 'embeds'.")
-        embeds = [disnake.Embed.from_dict(clean_embed_for_discohook(e)) for e in data["embeds"]]
-        content = data.get("content", " ")  # если есть текст, его тоже добавим (опционально)
-    except Exception as e:
-        return await ctx.edit_original_response(content=f"❌ Ошибка парсинга JSON: {e}")
-
-    # Получаем список получателей
-    guild = ctx.guild or bot.get_guild(int(CONFIG["GUILD_ID"]))
-    if not guild:
-        return await ctx.edit_original_response(content="❌ Сервер не найден.")
-
-    members = [m for m in guild.members if not m.bot and m != ctx.author]
-    if только_с_ролью:
-        members = [m for m in members if только_с_ролью in m.roles]
-
-    if not members:
-        return await ctx.edit_original_response(content="❌ Нет получателей для рассылки.")
-
-    # Проверяем, нет ли уже активной рассылки
-    if MassSender.active and not MassSender.active.done():
-        return await ctx.edit_original_response(
-            content=f"⚠️ Уже идёт рассылка. Дождитесь завершения или остановите её (кнопка в статусном сообщении)."
-        )
-
-    # Создаём embed с прогрессом
-    progress_embed = disnake.Embed(
-        title="📨 Запущена массовая рассылка",
-        description=(
-            f"**Получателей:** {len(members)}\n"
-            f"**Статус:** ⏳ Идёт отправка...\n"
-            f"**Успешно:** 0\n"
-            f"**Ошибок:** 0\n"
-            f"**Осталось:** {len(members)}"
-        ),
-        color=0x00aaff
-    )
-
-    # Кнопка "Остановить"
-    stop_view = View()
-    stop_view.add_item(Button(
-        label="⏹️ Остановить рассылку",
-        style=ButtonStyle.danger,
-        custom_id="stop_mass_send"
-    ))
-
-    # Отправляем сообщение с прогрессом в канал (видно только админу)
-    progress_msg = await ctx.edit_original_response(embed=progress_embed, view=stop_view)
-
-    # Запускаем рассылку в фоновой задаче
-    MassSender.stop_flag = False
-    task = bot.loop.create_task(
-        send_mass_messages(
-            members=members,
-            content=content,
-            embeds=embeds,
-            progress_msg=progress_msg,
-            progress_embed=progress_embed,
-            ctx=ctx
-        )
-    )
-    MassSender.active = task
-
-
-async def send_mass_messages(members, content, embeds, progress_msg, progress_embed, ctx):
-    """Фоновая отправка сообщений с обновлением прогресса."""
-    total = len(members)
-    sent = 0
-    errors = 0
-    batch_size = 5  # отправляем по 5 человек одновременно
-    delay_between_batches = 0.5  # пауза между пачками (сек)
-
-    for i in range(0, total, batch_size):
-        # Если флаг остановки установлен – прерываем
-        if MassSender.stop_flag:
-            progress_embed.title = "⏹️ Рассылка остановлена"
-            progress_embed.description = (
-                f"**Получателей:** {total}\n"
-                f"**Статус:** ⛔ Остановлена пользователем\n"
-                f"**Успешно:** {sent}\n"
-                f"**Ошибок:** {errors}\n"
-                f"**Осталось:** {total - sent}"
-            )
-            progress_embed.color = 0xff0000
-            await progress_msg.edit(embed=progress_embed, view=None)
-            await log_discord(
-                title="⛔ Рассылка остановлена",
-                description=f"Админ {ctx.author.mention} остановил рассылку.\nОтправлено: {sent}, ошибок: {errors}",
-                color=0xff0000
-            )
-            return
-
-        batch = members[i:i+batch_size]
-        # Отправляем пачку асинхронно
-        tasks = []
-        for member in batch:
-            tasks.append(send_dm(member, content, embeds))
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Считаем успехи/ошибки
-        for res in results:
-            if isinstance(res, Exception):
-                errors += 1
-            else:
-                sent += 1
-
-        # Обновляем embed с прогрессом каждую пачку
-        progress_embed.description = (
-            f"**Получателей:** {total}\n"
-            f"**Статус:** ⏳ Идёт отправка...\n"
-            f"**Успешно:** {sent}\n"
-            f"**Ошибок:** {errors}\n"
-            f"**Осталось:** {total - sent}"
-        )
-        await progress_msg.edit(embed=progress_embed)
-
-        # Пауза между пачками (чтобы не превысить лимиты)
-        await asyncio.sleep(delay_between_batches)
-
-    # Рассылка завершена
-    progress_embed.title = "✅ Рассылка завершена"
-    progress_embed.description = (
-        f"**Получателей:** {total}\n"
-        f"**Статус:** ✅ Готово\n"
-        f"**Успешно:** {sent}\n"
-        f"**Ошибок:** {errors}\n"
-        f"**Осталось:** 0"
-    )
-    progress_embed.color = 0x00ff00
-    await progress_msg.edit(embed=progress_embed, view=None)
-    await log_discord(
-        title="✅ Рассылка завершена",
-        description=f"Админ {ctx.author.mention} завершил рассылку.\nОтправлено: {sent}, ошибок: {errors}",
-        color=0x00ff00
-    )
-
-
-async def send_dm(member, content, embeds):
-    """Отправляет одно сообщение в ЛС. Возвращает None при успехе, иначе Exception."""
-    try:
-        await member.send(content=content, embeds=embeds)
-    except Exception as e:
-        logger.warning(f"Не удалось отправить {member}: {e}")
-        raise e  # пробрасываем, чтобы gather поймал
-
-
-@bot.event
-async def on_interaction(inter: disnake.MessageInteraction):
-    """Обработчик кнопки остановки рассылки."""
-    if inter.data.get("custom_id") == "stop_mass_send":
-        # Проверяем, что нажал тот же админ, который запустил (или любой админ)
-        # Для простоты разрешаем остановить только автору, но можно расширить
-        # Чтобы узнать автора, нужно хранить его ID в задаче
-        # В текущей реализации мы не храним, поэтому разрешаем любому админу
-        if not any(r.id in CONFIG["ALLOWED_ROLES"] for r in inter.author.roles):
-            return await inter.response.send_message("⛔ Нет прав для остановки.", ephemeral=True)
-
-        if MassSender.stop_flag:
-            return await inter.response.send_message("⛔ Рассылка уже остановлена.", ephemeral=True)
-
-        MassSender.stop_flag = True
-        await inter.response.send_message("⏹️ Рассылка будет остановлена после текущей пачки.", ephemeral=True)
-        await log_discord(
-            title="⏹️ Запрос на остановку",
-            description=f"Админ {inter.author.mention} нажал кнопку остановки.",
-            color=0xff6600
-        )
-
-
-class ConfirmSendView(View):
-    """Кнопки подтверждения / отмены рассылки."""
-    def __init__(self, members, msg_type, text, file_attachment, author):
-        super().__init__(timeout=120)
-        self.members = members
-        self.msg_type = msg_type
-        self.text = text
-        self.file = file_attachment
-        self.author = author
-        self.is_confirmed = False
-
-    @disnake.ui.button(label="✅ Подтвердить", style=disnake.ButtonStyle.success, custom_id="confirm_send")
-    async def confirm(self, button, inter: disnake.MessageInteraction):
-        if inter.author != self.author:
-            return await inter.response.send_message("❌ Только инициатор может подтвердить.", ephemeral=True)
-
-        self.is_confirmed = True
-        await inter.response.edit_message(content="⏳ Начинаю рассылку... Это может занять некоторое время.", view=None, embed=None)
-
-        # Запускаем рассылку в фоновой задаче
-        bot.loop.create_task(self.start_sending(inter))
-
-    @disnake.ui.button(label="❌ Отменить", style=disnake.ButtonStyle.danger, custom_id="cancel_send")
-    async def cancel(self, button, inter: disnake.MessageInteraction):
-        if inter.author != self.author:
-            return await inter.response.send_message("❌ Только инициатор может отменить.", ephemeral=True)
-        await inter.response.edit_message(content="❌ Рассылка отменена.", view=None, embed=None)
-        await log_discord("❌ Рассылка отменена", f"Админ {inter.author.mention} отменил рассылку.", color=0xff0000)
-
-    async def start_sending(self, inter):
-        """Основная функция отправки в ЛС."""
-        total = len(self.members)
-        sent = 0
-        errors = 0
-        failed_users = []
-
-        # Подготавливаем содержимое
-        if self.msg_type == "text":
-            content = self.text
-            embeds = None
-        else:  # embed
-            content = " "
-            try:
-                if self.file:
-                    raw = await self.file.read()
-                    data = json.loads(raw.decode("utf-8"))
-                else:
-                    data = json.loads(self.text)
-                if "embeds" not in data:
-                    raise ValueError("Нет поля 'embeds' в JSON.")
-                embeds = [disnake.Embed.from_dict(clean_embed_for_discohook(e)) for e in data["embeds"]]
-            except Exception as e:
-                await inter.edit_original_response(content=f"❌ Ошибка в JSON embed: {e}")
-                return
-
-        # Отправляем каждому участнику с паузой 0.5 сек (чтобы не получить бан)
-        for idx, member in enumerate(self.members):
-            try:
-                if self.msg_type == "text":
-                    await member.send(content)
-                else:
-                    await member.send(content=content, embeds=embeds)
-                sent += 1
-            except Exception as e:
-                errors += 1
-                failed_users.append(f"{member} ({member.id}) — {e}")
-                logger.warning(f"Не удалось отправить {member}: {e}")
-
-            # Обновляем статус каждые 10 человек
-            if idx % 10 == 0:
-                await inter.edit_original_response(
-                    content=f"⏳ Прогресс: {sent}/{total} отправлено, ошибок: {errors}"
-                )
-            await asyncio.sleep(0.5)  # пауза для защиты от лимитов
-
-        # Финальный отчёт
-        report = (
-            f"✅ Рассылка завершена!\n"
-            f"Отправлено: {sent}\n"
-            f"Ошибок: {errors}\n"
-        )
-        if failed_users:
-            # если ошибок много, не выводим всех, а просто количество
-            if len(failed_users) <= 20:
-                report += "Неудачные отправки:\n" + "\n".join(failed_users[:20])
-            else:
-                report += f"Первые 20 ошибок:\n" + "\n".join(failed_users[:20])
-
-        await inter.edit_original_response(content=report)
-
-        # Логируем результат в канал
-        await log_discord(
-            title="📨 Рассылка завершена",
-            description=(
-                f"Админ: {inter.author.mention}\n"
-                f"Отправлено: {sent} / {total}\n"
-                f"Ошибок: {errors}"
-            ),
-            color=0x00ff00 if errors == 0 else 0xff6600
-        )
-
 # ---------------------------- MENU PANEL ----------------------------
 MENU_CHANNEL_ID = 1462140026073776280
 MENU_OPTIONS = [
-
     {"label": "・BuyAll", "description": "Покупка всего ・Всё в одном месте",
-     "emoji": "<:buyall:1489833017047253032> ", "json_path": "data/menu_buyall.json"},
+     "emoji": "<:buyall:1489833017047253032> ", "json_path": "menu_buyall.json"},
     {"label": "・Discord", "description": "Покупка Nitro и Boosts ・Статус и величие",
-     "emoji": "<:Discord:1464831837300854936>", "json_path": "data/menu_discord.json"},
+     "emoji": "<:Discord:1464831837300854936>", "json_path": "menu_discord.json"},
     {"label": "・Steam", "description": "Пополнение и очки ・Свобода к играм",
-     "emoji": "<:Steam:1464833200416100402>", "json_path": "data/menu_steam.json"},
+     "emoji": "<:Steam:1464833200416100402>", "json_path": "menu_steam.json"},
     {"label": "・Telegram", "description": "Звезды и Подарки ・Индивидуальность и защита",
-     "emoji": "<:Telegram:1465720888677896314>", "json_path": "data/menu_telegram.json"},
+     "emoji": "<:Telegram:1465720888677896314>", "json_path": "menu_telegram.json"},
     {"label": "・Украшение Discord", "description": "Украшения и Бейджики ・Изысканность и красота",
-     "emoji": "<:Decoration:1465729329290936403>", "json_path": "data/menu_decoration.json"},
+     "emoji": "<:Decoration:1465729329290936403>", "json_path": "menu_decoration.json"},
     {"label": "・Roblox", "description": "Донат и Помощь ・Красота и играбельность",
-     "emoji": "<:Roblox:1465752155251150911>", "json_path": "data/menu_roblox.json"},
+     "emoji": "<:Roblox:1465752155251150911>", "json_path": "menu_roblox.json"},
     {"label": "・Epic Games", "description": "Фортнайт и Аккаунт ・ Заработок и донат",
-     "emoji": "<:EpicGames:1465765441887797248>", "json_path": "data/menu_epic.json"},
+     "emoji": "<:EpicGames:1465765441887797248>", "json_path": "menu_epic.json"},
     {"label": "・Supercell", "description": "Brawl Stars и Clash Royale ・Динамика и богатство",
-     "emoji": "<:SuperCell:1465768886484996260>", "json_path": "data/menu_supersell.json"},
+     "emoji": "<:SuperCell:1465768886484996260>", "json_path": "menu_supersell.json"},
     {"label": "・Spotify", "description": "Подписка на музыку ・Громкость и красочность",
-     "emoji": "<:Spotify:1465770796411785330>", "json_path": "data/menu_spotify.json"},
+     "emoji": "<:Spotify:1465770796411785330>", "json_path": "menu_spotify.json"},
     {"label": "・Дизайн", "description": "Отличный дизайн ・Выбор для лучших",
-     "emoji": "<:Design:1465771436580012106>", "json_path": "data/menu_design.json"},
+     "emoji": "<:Design:1465771436580012106>", "json_path": "menu_design.json"},
     {"label": "・Бот для Дискорда", "description": "Рабочий и легкий ・Плавность и скорость",
-     "emoji": "<:Bot:1465771816080380109>", "json_path": "data/menu_bot.json"},
-
+     "emoji": "<:Bot:1465771816080380109>", "json_path": "menu_bot.json"},
 ]
 
 class MenuSelect(disnake.ui.StringSelect):
@@ -1487,19 +1084,16 @@ class MenuSelect(disnake.ui.StringSelect):
         except Exception as e:
             logger.exception("MenuSelect callback error: %s", e)
 
-
 class MenuView(disnake.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(MenuSelect())
-
 
 @bot.event
 async def on_interaction(inter):
     if isinstance(inter, disnake.MessageInteraction):
         if inter.data.get("custom_id") == "menu:buy_ticket":
             await inter.response.send_modal(BuyTicketModal())
-
 
 async def send_menu_panel():
     await bot.wait_until_ready()
@@ -1509,7 +1103,6 @@ async def send_menu_panel():
     if not channel:
         logger.warning("Menu panel channel not found")
         return
-
     existing_msg = None
     async for m in channel.history(limit=50):
         if m.author == bot.user and m.components:
@@ -1517,17 +1110,14 @@ async def send_menu_panel():
             break
     if existing_msg:
         return
-
-    embed_path = "data/menu_embed.json"
+    embed_path = "menu_embed.json"
     embed = disnake.Embed(title="Меню выбора", description="Выберите категорию", color=0x0499D2)
     if os.path.exists(embed_path):
         with open(embed_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             embed = disnake.Embed.from_dict(data["embeds"][0])
-
     msg = await channel.send(embed=embed, view=MenuView())
     bot.add_view(MenuView())
-
 
 # ----------------------------
 # on_ready
@@ -1536,24 +1126,17 @@ async def send_menu_panel():
 async def on_ready():
     try:
         await bot.change_presence(activity=disnake.Game(name="Diamond Shop"))
-
-        # Persistent views
         bot.add_view(TicketPanelView())
         bot.add_view(TicketButtons())
         bot.add_view(TicketButtonsPaid())
         bot.add_view(MenuView())
-
         bot.loop.create_task(send_menu_panel())
         bot.loop.create_task(ensure_panel())
         bot.loop.create_task(keep_voice_alive())
-
         if not review_counter_task.is_running():
             review_counter_task.start()
-
-        # Обновляем баннер сразу при запуске
         await update_review_counter()
-
-        # --- Обновить роли для всех участников при запуске ---
+        # Обновление ролей для всех при запуске
         try:
             guild = bot.get_guild(int(CONFIG["GUILD_ID"]))
             if guild:
@@ -1567,12 +1150,10 @@ async def on_ready():
                         logger.warning(f"Пользователь {user_id} не найден на сервере при запуске")
         except Exception as e:
             logger.exception("Ошибка обновления ролей при старте: %s", e)
-
         logger.info("%s is ready", bot.user)
         await log_discord("✅ Бот запустился", f"{bot.user} готов и онлайн", color=0x00ff00)
     except Exception as e:
         logger.exception("on_ready error: %s", e)
-
 
 # ----------------------------
 # Run the bot
