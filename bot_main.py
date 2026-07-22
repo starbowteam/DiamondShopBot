@@ -1025,29 +1025,28 @@ async def steam(
 MENU_CHANNEL_ID = 1462140026073776280
 MENU_OPTIONS = [
     {"label": "・BuyAll", "description": "Покупка всего ・Всё в одном месте",
-     "emoji": "<:buyall:1489833017047253032> ", "json_path": "menu_buyall.json"},
+     "emoji": "<:buyall:1489833017047253032> ", "json_path": "catalog/menu_buyall.json"},
     {"label": "・Discord", "description": "Покупка Nitro и Boosts ・Статус и величие",
-     "emoji": "<:Discord:1464831837300854936>", "json_path": "menu_discord.json"},
+     "emoji": "<:Discord:1464831837300854936>", "json_path": "catalog/menu_discord.json"},
     {"label": "・Steam", "description": "Пополнение и очки ・Свобода к играм",
-     "emoji": "<:Steam:1464833200416100402>", "json_path": "menu_steam.json"},
+     "emoji": "<:Steam:1464833200416100402>", "json_path": "catalog/menu_steam.json"},
     {"label": "・Telegram", "description": "Звезды и Подарки ・Индивидуальность и защита",
-     "emoji": "<:Telegram:1465720888677896314>", "json_path": "menu_telegram.json"},
+     "emoji": "<:Telegram:1465720888677896314>", "json_path": "catalog/menu_telegram.json"},
     {"label": "・Украшение Discord", "description": "Украшения и Бейджики ・Изысканность и красота",
-     "emoji": "<:Decoration:1465729329290936403>", "json_path": "menu_decoration.json"},
+     "emoji": "<:Decoration:1465729329290936403>", "json_path": "catalog/menu_decoration.json"},
     {"label": "・Roblox", "description": "Донат и Помощь ・Красота и играбельность",
-     "emoji": "<:Roblox:1465752155251150911>", "json_path": "menu_roblox.json"},
+     "emoji": "<:Roblox:1465752155251150911>", "json_path": "catalog/menu_roblox.json"},
     {"label": "・Epic Games", "description": "Фортнайт и Аккаунт ・ Заработок и донат",
-     "emoji": "<:EpicGames:1465765441887797248>", "json_path": "menu_epic.json"},
+     "emoji": "<:EpicGames:1465765441887797248>", "json_path": "catalog/menu_epic.json"},
     {"label": "・Supercell", "description": "Brawl Stars и Clash Royale ・Динамика и богатство",
-     "emoji": "<:SuperCell:1465768886484996260>", "json_path": "menu_supersell.json"},
+     "emoji": "<:SuperCell:1465768886484996260>", "json_path": "catalog/menu_supersell.json"},
     {"label": "・Spotify", "description": "Подписка на музыку ・Громкость и красочность",
-     "emoji": "<:Spotify:1465770796411785330>", "json_path": "menu_spotify.json"},
+     "emoji": "<:Spotify:1465770796411785330>", "json_path": "catalog/menu_spotify.json"},
     {"label": "・Дизайн", "description": "Отличный дизайн ・Выбор для лучших",
-     "emoji": "<:Design:1465771436580012106>", "json_path": "menu_design.json"},
+     "emoji": "<:Design:1465771436580012106>", "json_path": "catalog/menu_design.json"},
     {"label": "・Бот для Дискорда", "description": "Рабочий и легкий ・Плавность и скорость",
-     "emoji": "<:Bot:1465771816080380109>", "json_path": "menu_bot.json"},
+     "emoji": "<:Bot:1465771816080380109>", "json_path": "catalog/menu_bot.json"},
 ]
-
 class MenuSelect(disnake.ui.StringSelect):
     def __init__(self):
         options = [
@@ -1110,7 +1109,7 @@ async def send_menu_panel():
             break
     if existing_msg:
         return
-    embed_path = "menu_embed.json"
+    embed_path = "catalog/menu_embed.json"
     embed = disnake.Embed(title="Меню выбора", description="Выберите категорию", color=0x0499D2)
     if os.path.exists(embed_path):
         with open(embed_path, "r", encoding="utf-8") as f:
