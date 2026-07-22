@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/root/bots/dmshop_bot/bot_main.py", line 13, in <module>
+    import disnake
+ModuleNotFoundError: No module named 'disnake'
