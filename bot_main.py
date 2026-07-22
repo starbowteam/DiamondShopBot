@@ -19,7 +19,7 @@ from disnake import PartialEmoji, ui, ButtonStyle, Embed
 # CONFIG
 # ----------------------------
 CONFIG = {
-    "BOT_TOKEN": "MTA5MDgwNTcyNDY4NDIzNDkxMg.G0m8Sq.8IwaWrhNMNYge8mLQNSQ9AT5uxNavon0ITf5bQ",
+    "BOT_TOKEN": os.getenv("BOT_TOKEN"),  # теперь берётся из переменной окружения
     "ALLOWED_ROLES": [1154757071330365490, 1127428607606796294, 1179045907493306550,1529217572849844294],
     "ALLOWED_ROLE_TICKET": [1459249476236607498],
     "LOG_CHANNEL_ID": 1462418981825810535,
@@ -1579,8 +1579,8 @@ async def on_ready():
 # ----------------------------
 if __name__ == "__main__":
     if not CONFIG["BOT_TOKEN"]:
-        logger.error("BOT_TOKEN not set in environment")
-        print("❌ Ошибка: не установлен BOT_TOKEN в переменных окружения")
+        logger.error("BOT_TOKEN не установлен в переменных окружения")
+        print("❌ Ошибка: не найден BOT_TOKEN. Установите переменную BOT_TOKEN.")
         sys.exit(1)
     try:
         bot.run(CONFIG["BOT_TOKEN"])
