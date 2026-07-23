@@ -1124,7 +1124,7 @@ async def send_menu_panel():
 @bot.event
 async def on_ready():
     try:
-        await bot.change_presence(activity=disnake.Game(name="Diamond Shop"))
+        await bot.change_presence(activity=disnake.Game(name="Основной бот"))
         bot.add_view(TicketPanelView())
         bot.add_view(TicketButtons())
         bot.add_view(TicketButtonsPaid())
